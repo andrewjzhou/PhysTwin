@@ -141,8 +141,33 @@ In the long term, we aim to develop a comprehensive physics simulator focused on
 
 ## Setup
 
-> **Choose one installation path below** — standard Linux, Windows, Docker, or the RTX 5090-specific environment.
-### 🐧 Linux Setup
+> **Choose one installation path below** — uv, standard Linux (conda), Windows, Docker, or the RTX 5090-specific environment.
+
+### ⚡ Linux Setup — uv (no conda)
+[uv](https://docs.astral.sh/uv/) reproduces the same environment as the conda path from `pyproject.toml` + `uv.lock`,
+in a project-local `.venv`. Needs a CUDA toolkit with `nvcc` (12.x) and a C++ compiler.
+
+```
+# Compile the CUDA extensions for your GPU:
+#   8.6 = RTX 30xx, 8.9 = RTX 40xx, 12.0 = RTX 50xx (https://developer.nvidia.com/cuda-gpus)
+export TORCH_CUDA_ARCH_LIST=8.9+PTX
+export CUDA_HOME=/usr/local/cuda   # or wherever your toolkit lives
+
+bash ./env_install/uv_install.sh
+
+# Download the necessary pretrained models for data processing
+bash ./env_install/download_pretrained_models.sh
+```
+
+This installs torch 2.4.0+cu121, PyTorch3D 0.7.8, and builds `diff-gaussian-rasterization`,
+`simple-knn`, `fused-ssim` and `gsplat` from source. Afterwards, prefix commands with `uv run`
+(e.g. `uv run python interactive_playground.py ...`) or `source .venv/bin/activate` first.
+
+Optional extras, off by default: `uv sync --extra realsense` (RealSense capture),
+`uv sync --extra upscale` (SDXL upscaler for data processing). TRELLIS and Grounded-SAM-2 are
+only needed to process raw videos — install them with the commands in `env_install/env_install.sh`.
+
+### 🐧 Linux Setup — conda
 ```
 # Here we use cuda-12.1
 export PATH={YOUR_DIR}/cuda/cuda-12.1/bin:$PATH
@@ -204,6 +229,17 @@ Download the original data, processed data, and results into the project's root 
 - [experiments](https://huggingface.co/datasets/Jianghanxiao/PhysTwin/resolve/main/experiments.zip): results of our second-order optimization.
 - [gaussian_output](https://huggingface.co/datasets/Jianghanxiao/PhysTwin/resolve/main/gaussian_output.zip): results of our static gaussian appearance.
 - [(optional) additional_data](https://huggingface.co/datasets/Jianghanxiao/PhysTwin/resolve/main/additional_data.zip): data for extra clothing demos not included in the original paper.
+
+> [!TIP]
+> These unpack to tens of GB. To keep them off your system drive, extract them somewhere else and
+> symlink the directories into the project root — every script uses these relative paths:
+> ```
+> ln -s /path/to/external/PhysTwin/data data
+> ln -s /path/to/external/PhysTwin/experiments experiments
+> ln -s /path/to/external/PhysTwin/experiments_optimization experiments_optimization
+> ln -s /path/to/external/PhysTwin/gaussian_output gaussian_output
+> # output dirs, same idea: temp_experiments, gaussian_output_dynamic, gaussian_output_dynamic_white
+> ```
 
 ## Interactive Playground
 

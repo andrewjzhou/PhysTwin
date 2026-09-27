@@ -1,0 +1,88 @@
+[project]
+name = "phystwin"
+version = "0.1.0"
+description = "PhysTwin: Physics-Informed Reconstruction and Simulation of Deformable Objects from Videos"
+readme = "README.md"
+requires-python = "==3.10.*"
+
+# Pinned to torch 2.4.0 / CUDA 12.1, which is what upstream's conda recipe uses and
+# the only combination with a prebuilt PyTorch3D wheel for Python 3.10.
+dependencies = [
+    "numpy==1.26.4",
+    "setuptools",
+    "wheel",
+    "torch==2.4.0",
+    "torchvision==0.19.0",
+    "torchaudio==2.4.0",
+    "warp-lang>=1.5,<2",
+    "usd-core",
+    "matplotlib",
+    "pyglet<2",
+    "open3d",
+    "trimesh",
+    "rtree",
+    "pyrender",
+    "termcolor",
+    "fvcore",
+    "wandb",
+    "moviepy",
+    "imageio",
+    "imageio-ffmpeg",
+    "opencv-python",
+    "cma",
+    "scipy",
+    "scikit-learn",
+    "pyyaml",
+    "tqdm",
+    "pynput",
+    "atomics",
+    "kornia",
+    "plyfile",
+    "einops",
+    "gsplat==1.4.0",
+    "lpips",
+    "pytorch3d",
+    # Local CUDA extensions vendored as git submodules.
+    "diff-gaussian-rasterization",
+    "simple-knn",
+    "fused-ssim",
+]
+
+[project.optional-dependencies]
+# Intel RealSense capture (only needed to record your own data).
+realsense = ["pyrealsense2", "cython"]
+# SDXL image upscaler used by the raw-video processing pipeline.
+upscale = ["diffusers", "accelerate", "transformers"]
+
+# These compile CUDA code against torch, so they must see the already-installed torch
+# instead of resolving a fresh one in an isolated build env. env_install/uv_install.sh
+# seeds the venv with torch + setuptools before syncing so this works from scratch.
+[tool.uv]
+no-build-isolation-package = [
+    "diff-gaussian-rasterization",
+    "simple-knn",
+    "fused-ssim",
+    "gsplat",
+]
+
+# Installed non-editable on purpose: simple-knn ships no __init__.py, which setuptools'
+# editable finder cannot resolve, so the compiled _C module would be unimportable.
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
+torchaudio = { index = "pytorch-cu121" }
+pytorch3d = { index = "pytorch3d-cu121" }
+diff-gaussian-rasterization = { path = "gaussian_splatting/submodules/diff-gaussian-rasterization" }
+simple-knn = { path = "gaussian_splatting/submodules/simple-knn" }
+fused-ssim = { path = "gaussian_splatting/submodules/fused-ssim" }
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch3d-cu121"
+format = "flat"
+url = "https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt240/download.html"
+explicit = true
